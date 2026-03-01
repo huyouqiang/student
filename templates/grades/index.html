@@ -38,6 +38,12 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
+      <div id="pagination-wrap" class="d-none mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small" id="pagination-info">共 0 条</span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0" id="pagination-btns"></ul>
+        </nav>
+      </div>
     </div>
   </div>
 </div>
@@ -137,6 +143,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
+        <div class="mb-3 position-relative">
+          <input type="text" class="form-control" id="selectStudentSearch" placeholder="输入姓名或年级搜索..." autocomplete="off">
+          <div id="selectStudentAutocomplete" class="list-group position-absolute w-100 mt-1 d-none" style="max-height: 200px; overflow-y: auto; z-index: 1050; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 0.25rem;"></div>
+        </div>
         <div id="selectStudentLoading" class="text-center py-3 text-muted">加载学生列表...</div>
         <div id="selectStudentList" class="list-group d-none"></div>
       </div>
@@ -172,6 +182,7 @@
   const empty = document.getElementById('empty');
   const tableWrap = document.getElementById('table-wrap');
   const API = '/api/grades';
+  const PER_PAGE = 50;
 
   function showView(which) {
     loading.classList.add('d-none');
@@ -191,13 +202,44 @@
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, '&#39;');
   }
 
-  async function loadList() {
+  function renderPagination(total, page, perPage) {
+    const totalPages = Math.ceil(total / perPage) || 1;
+    const wrap = document.getElementById('pagination-wrap');
+    const info = document.getElementById('pagination-info');
+    const btns = document.getElementById('pagination-btns');
+    if (total === 0) { wrap.classList.add('d-none'); return; }
+    wrap.classList.remove('d-none');
+    info.textContent = '共 ' + total + ' 条';
+    let html = '';
+    html += '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">上一页</a></li>';
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+        html += '<li class="page-item' + (i === page ? ' active' : '') + '"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+      } else if (i === page - 3 || i === page + 3) {
+        html += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+      }
+    }
+    html += '<li class="page-item' + (page >= totalPages ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">下一页</a></li>';
+    btns.innerHTML = html;
+    btns.querySelectorAll('a[data-page]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        const p = parseInt(this.dataset.page, 10);
+        if (p >= 1 && p <= totalPages) loadList(p);
+      });
+    });
+  }
+
+  async function loadList(page) {
+    page = page || 1;
     showView('loading');
     try {
-      const res = await fetch(API);
+      const res = await fetch(API + '?page=' + page + '&limit=' + PER_PAGE);
       if (!res.ok) throw new Error(res.statusText);
-      const list = await res.json();
-      if (list.length === 0) { showView('empty'); return; }
+      const data = await res.json();
+      const list = data.items;
+      const total = data.total;
+      if (list.length === 0 && total === 0) { showView('empty'); renderPagination(0, 1, PER_PAGE); return; }
       tbody.innerHTML = list.map(g => `
         <tr>
           <td>${g.id}</td>
@@ -213,6 +255,7 @@
         </tr>
       `).join('');
       showView('table');
+      renderPagination(total, page, PER_PAGE);
       bindRowEvents();
     } catch (e) {
       showView('empty');
@@ -246,16 +289,26 @@
   }
 
   let selectStudentTargetForm = null;
+  let selectStudentSearchTimer = null;
 
-  function openSelectStudentModal(targetFormId) {
-    selectStudentTargetForm = targetFormId;
+  function applySelectedStudent(s) {
+    const form = document.getElementById(selectStudentTargetForm);
+    form.querySelector('[name=student_id]').value = s.id;
+    form.querySelector('[name=student_name]').value = s.name;
+    bootstrap.Modal.getInstance(document.getElementById('selectStudentModal')).hide();
+    document.getElementById('selectStudentSearch').value = '';
+    document.getElementById('selectStudentAutocomplete').classList.add('d-none');
+    document.getElementById('selectStudentAutocomplete').innerHTML = '';
+  }
+
+  function loadStudentListForModal() {
     document.getElementById('selectStudentLoading').classList.remove('d-none');
     document.getElementById('selectStudentList').classList.add('d-none');
     document.getElementById('selectStudentList').innerHTML = '';
-    new bootstrap.Modal(document.getElementById('selectStudentModal')).show();
-    fetch('/api/students')
+    fetch('/api/students?all=1')
       .then(res => res.json())
-      .then(students => {
+      .then(data => {
+        const students = Array.isArray(data) ? data : (data.items || []);
         document.getElementById('selectStudentLoading').classList.add('d-none');
         if (students.length === 0) {
           document.getElementById('selectStudentList').innerHTML = '<div class="text-muted text-center py-3">暂无学生，请先在学生列表中添加</div>';
@@ -270,10 +323,7 @@
           document.getElementById('selectStudentModal').querySelectorAll('.select-student-btn').forEach(btn => {
             btn.addEventListener('click', function () {
               const s = JSON.parse(this.getAttribute('data-item'));
-              const form = document.getElementById(selectStudentTargetForm);
-              form.querySelector('[name=student_id]').value = s.id;
-              form.querySelector('[name=student_name]').value = s.name;
-              bootstrap.Modal.getInstance(document.getElementById('selectStudentModal')).hide();
+              applySelectedStudent(s);
             });
           });
         }
@@ -283,6 +333,67 @@
         document.getElementById('selectStudentList').innerHTML = '<div class="text-danger text-center py-3">加载失败</div>';
       });
   }
+
+  function openSelectStudentModal(targetFormId) {
+    selectStudentTargetForm = targetFormId;
+    document.getElementById('selectStudentSearch').value = '';
+    document.getElementById('selectStudentAutocomplete').classList.add('d-none');
+    document.getElementById('selectStudentAutocomplete').innerHTML = '';
+    const modal = new bootstrap.Modal(document.getElementById('selectStudentModal'));
+    modal.show();
+    document.getElementById('selectStudentModal').addEventListener('shown.bs.modal', function focusSearch() {
+      document.getElementById('selectStudentSearch').focus();
+      document.getElementById('selectStudentModal').removeEventListener('shown.bs.modal', focusSearch);
+    }, { once: true });
+    loadStudentListForModal();
+  }
+
+  document.getElementById('selectStudentSearch').addEventListener('input', function () {
+    const q = this.value.trim();
+    clearTimeout(selectStudentSearchTimer);
+    if (!q) {
+      document.getElementById('selectStudentAutocomplete').classList.add('d-none');
+      document.getElementById('selectStudentAutocomplete').innerHTML = '';
+      return;
+    }
+    selectStudentSearchTimer = setTimeout(function () {
+      fetch('/api/students?search=' + encodeURIComponent(q))
+        .then(res => res.json())
+        .then(data => {
+          const students = Array.isArray(data) ? data : (data.items || []);
+          const ac = document.getElementById('selectStudentAutocomplete');
+          if (students.length === 0) {
+            ac.innerHTML = '<div class="list-group-item text-muted">无匹配学生</div>';
+          } else {
+            ac.innerHTML = students.map(s => `
+              <button type="button" class="list-group-item list-group-item-action ac-student-btn" data-item='${escapeAttr(JSON.stringify({ id: s.id, name: s.name }))}'>
+                ${escapeHtml(s.name)}（ID: ${s.id}，${escapeHtml(s.grade || '未分班')}）
+              </button>
+            `).join('');
+            ac.querySelectorAll('.ac-student-btn').forEach(btn => {
+              btn.addEventListener('click', function () {
+                const s = JSON.parse(this.getAttribute('data-item'));
+                applySelectedStudent(s);
+              });
+            });
+          }
+          ac.classList.remove('d-none');
+        })
+        .catch(() => {
+          document.getElementById('selectStudentAutocomplete').innerHTML = '<div class="list-group-item text-danger">加载失败</div>';
+          document.getElementById('selectStudentAutocomplete').classList.remove('d-none');
+        });
+    }, 300);
+  });
+
+  document.getElementById('selectStudentSearch').addEventListener('blur', function () {
+    setTimeout(function () {
+      const ac = document.getElementById('selectStudentAutocomplete');
+      if (!ac.contains(document.activeElement)) {
+        ac.classList.add('d-none');
+      }
+    }, 150);
+  });
 
   document.getElementById('addSelectStudent').addEventListener('click', function () {
     openSelectStudentModal('addForm');
@@ -309,7 +420,7 @@
       if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
       form.reset();
-      loadList();
+      loadList(1);
     } catch (e) { alert('新增失败：' + e.message); }
   });
 
@@ -331,7 +442,7 @@
       const res = await fetch(API + '/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-      loadList();
+      loadList(1);
     } catch (e) { alert('更新失败：' + e.message); }
   });
 
@@ -341,11 +452,11 @@
       const res = await fetch(API + '/' + id, { method: 'DELETE' });
       if (!res.ok) throw new Error(res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-      loadList();
+      loadList(1);
     } catch (e) { alert('删除失败：' + e.message); }
   });
 
-  loadList();
+  loadList(1);
 })();
 </script>
 {% endblock %}

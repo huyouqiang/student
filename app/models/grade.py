@@ -55,6 +55,46 @@ class GradeStore:
         conn.close()
         return rows
 
+    def get_count(self, student_id: Optional[int] = None) -> int:
+        """获取总记录数。"""
+        conn = get_connection()
+        cursor = conn.cursor()
+        if student_id is not None:
+            cursor.execute(
+                "SELECT COUNT(*) FROM grades WHERE student_id = %s",
+                (student_id,),
+            )
+        else:
+            cursor.execute("SELECT COUNT(*) FROM grades")
+        total = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return total
+
+    def get_page(
+        self,
+        offset: int,
+        limit: int,
+        student_id: Optional[int] = None,
+    ) -> List[dict]:
+        """分页获取成绩列表。"""
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        if student_id is not None:
+            cursor.execute(
+                "SELECT * FROM grades WHERE student_id = %s ORDER BY id LIMIT %s OFFSET %s",
+                (student_id, limit, offset),
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM grades ORDER BY id LIMIT %s OFFSET %s",
+                (limit, offset),
+            )
+        rows = [_normalize_grade_row(r) for r in cursor.fetchall()]
+        cursor.close()
+        conn.close()
+        return rows
+
     def get_by_id(self, grade_id: int) -> Optional[dict]:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)

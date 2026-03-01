@@ -37,6 +37,12 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
+      <div id="pagination-wrap" class="d-none mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small" id="pagination-info">共 0 条</span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0" id="pagination-btns"></ul>
+        </nav>
+      </div>
     </div>
   </div>
 </div>
@@ -140,6 +146,7 @@
   const empty = document.getElementById('empty');
   const tableWrap = document.getElementById('table-wrap');
   const API = '/api/teachers';
+  const PER_PAGE = 50;
 
   function showView(which) {
     loading.classList.add('d-none');
@@ -159,13 +166,44 @@
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, '&#39;');
   }
 
-  async function loadList() {
+  function renderPagination(total, page, perPage) {
+    const totalPages = Math.ceil(total / perPage) || 1;
+    const wrap = document.getElementById('pagination-wrap');
+    const info = document.getElementById('pagination-info');
+    const btns = document.getElementById('pagination-btns');
+    if (total === 0) { wrap.classList.add('d-none'); return; }
+    wrap.classList.remove('d-none');
+    info.textContent = '共 ' + total + ' 条';
+    let html = '';
+    html += '<li class="page-item' + (page <= 1 ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">上一页</a></li>';
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+        html += '<li class="page-item' + (i === page ? ' active' : '') + '"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+      } else if (i === page - 3 || i === page + 3) {
+        html += '<li class="page-item disabled"><span class="page-link">…</span></li>';
+      }
+    }
+    html += '<li class="page-item' + (page >= totalPages ? ' disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">下一页</a></li>';
+    btns.innerHTML = html;
+    btns.querySelectorAll('a[data-page]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        const p = parseInt(this.dataset.page, 10);
+        if (p >= 1 && p <= totalPages) loadList(p);
+      });
+    });
+  }
+
+  async function loadList(page) {
+    page = page || 1;
     showView('loading');
     try {
-      const res = await fetch(API);
+      const res = await fetch(API + '?page=' + page + '&limit=' + PER_PAGE);
       if (!res.ok) throw new Error(res.statusText);
-      const list = await res.json();
-      if (list.length === 0) { showView('empty'); return; }
+      const data = await res.json();
+      const list = data.items;
+      const total = data.total;
+      if (list.length === 0 && total === 0) { showView('empty'); renderPagination(0, 1, PER_PAGE); return; }
       tbody.innerHTML = list.map(t => `
         <tr>
           <td>${t.id}</td>
@@ -180,6 +218,7 @@
         </tr>
       `).join('');
       showView('table');
+      renderPagination(total, page, PER_PAGE);
       bindRowEvents();
     } catch (e) {
       showView('empty');
@@ -220,7 +259,7 @@
       if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
       form.reset();
-      loadList();
+      loadList(1);
     } catch (e) { alert('新增失败：' + e.message); }
   });
 
@@ -233,7 +272,7 @@
       const res = await fetch(API + '/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-      loadList();
+      loadList(1);
     } catch (e) { alert('更新失败：' + e.message); }
   });
 
@@ -243,11 +282,11 @@
       const res = await fetch(API + '/' + id, { method: 'DELETE' });
       if (!res.ok) throw new Error(res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-      loadList();
+      loadList(1);
     } catch (e) { alert('删除失败：' + e.message); }
   });
 
-  loadList();
+  loadList(1);
 })();
 </script>
 {% endblock %}

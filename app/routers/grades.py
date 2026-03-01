@@ -1,6 +1,6 @@
 """学生成绩增删改查 API。"""
 
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -11,12 +11,19 @@ from app.schemas.grade import Grade, GradeCreate, GradeUpdate
 router = APIRouter(prefix="/api/grades", tags=["学生成绩"])
 
 
-@router.get("", response_model=List[Grade])
+@router.get("")
 def list_grades(
     student_id: Optional[int] = Query(None, description="按学生 ID 筛选"),
-) -> list:
-    """获取成绩列表（访客可查看），支持按 student_id 筛选。"""
-    return grade_store.get_all(student_id=student_id)
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=50),
+) -> Union[dict, list]:
+    """获取成绩列表（访客可查看）。按 student_id 筛选时返回全部；否则分页。"""
+    if student_id is not None:
+        return grade_store.get_all(student_id=student_id)
+    total = grade_store.get_count()
+    offset = (page - 1) * limit
+    items = grade_store.get_page(offset, limit, student_id=None)
+    return {"items": items, "total": total, "page": page, "per_page": limit}
 
 
 @router.get("/{grade_id}", response_model=Grade)

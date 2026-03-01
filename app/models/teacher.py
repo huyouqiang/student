@@ -33,6 +33,29 @@ class TeacherStore:
         conn.close()
         return rows
 
+    def get_count(self) -> int:
+        """获取总记录数。"""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM teachers")
+        total = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return total
+
+    def get_page(self, offset: int, limit: int) -> List[dict]:
+        """分页获取教师列表。"""
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM teachers ORDER BY id LIMIT %s OFFSET %s",
+            (limit, offset),
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+
     def get_by_id(self, teacher_id: int) -> Optional[dict]:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)

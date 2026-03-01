@@ -35,6 +35,45 @@ class StudentStore:
         conn.close()
         return rows
 
+    def get_count(self) -> int:
+        """获取总记录数。"""
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM students")
+        total = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return total
+
+    def get_page(self, offset: int, limit: int) -> List[dict]:
+        """分页获取学生列表。"""
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM students ORDER BY id LIMIT %s OFFSET %s",
+            (limit, offset),
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+
+    def search(self, keyword: str, limit: int = 20) -> List[dict]:
+        """按姓名或年级搜索学生。"""
+        if not keyword or not keyword.strip():
+            return []
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        pattern = f"%{keyword.strip()}%"
+        cursor.execute(
+            "SELECT * FROM students WHERE name LIKE %s OR grade LIKE %s ORDER BY id LIMIT %s",
+            (pattern, pattern, limit),
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+
     def get_by_id(self, student_id: int) -> Optional[dict]:
         """根据 id 获取学生。"""
         conn = get_connection()

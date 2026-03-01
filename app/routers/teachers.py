@@ -2,7 +2,7 @@
 
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.auth import require_admin
 from app.models.teacher import teacher_store
@@ -11,10 +11,16 @@ from app.schemas.teacher import Teacher, TeacherCreate, TeacherUpdate
 router = APIRouter(prefix="/api/teachers", tags=["教师"])
 
 
-@router.get("", response_model=List[Teacher])
-def list_teachers() -> list:
-    """获取教师列表（访客可查看）。"""
-    return teacher_store.get_all()
+@router.get("")
+def list_teachers(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=50),
+) -> dict:
+    """获取教师列表（访客可查看，分页）。"""
+    total = teacher_store.get_count()
+    offset = (page - 1) * limit
+    items = teacher_store.get_page(offset, limit)
+    return {"items": items, "total": total, "page": page, "per_page": limit}
 
 
 @router.get("/{teacher_id}", response_model=Teacher)

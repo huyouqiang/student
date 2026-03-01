@@ -1,8 +1,8 @@
 """学生列表增删改查 API。"""
 
-from typing import Annotated, List
+from typing import Annotated, List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.auth import require_admin
 from app.models.student import student_store
@@ -11,10 +11,22 @@ from app.schemas.student import Student, StudentCreate, StudentUpdate
 router = APIRouter(prefix="/api/students", tags=["学生"])
 
 
-@router.get("", response_model=List[Student])
-def list_students() -> list:
-    """获取学生列表（访客可查看）。"""
-    return student_store.get_all()
+@router.get("")
+def list_students(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=50),
+    all_items: bool = Query(False, alias="all", description="返回全部不分页"),
+    search: Optional[str] = Query(None, description="按姓名或年级搜索"),
+) -> Union[dict, list]:
+    """获取学生列表（访客可查看，分页）。"""
+    if search is not None and search.strip():
+        return student_store.search(search.strip(), limit=20)
+    if all_items:
+        return student_store.get_all()
+    total = student_store.get_count()
+    offset = (page - 1) * limit
+    items = student_store.get_page(offset, limit)
+    return {"items": items, "total": total, "page": page, "per_page": limit}
 
 
 @router.get("/{student_id}", response_model=Student)
