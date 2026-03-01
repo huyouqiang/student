@@ -77,6 +77,31 @@ def init_db() -> None:
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL UNIQUE,
+            pass VARCHAR(64) NOT NULL,
+            role TINYINT NOT NULL DEFAULT 1
+        )
+    """)
+
+    cursor.execute("SELECT COUNT(*) FROM users")
+    if cursor.fetchone()[0] == 0:
+        import hashlib
+
+        def _hp(p):
+            return hashlib.sha256(("student-admin" + p).encode()).hexdigest()
+
+        cursor.execute(
+            "INSERT INTO users (name, pass, role) VALUES (%s, %s, 0)",
+            ("admin", _hp("admin123")),
+        )
+        cursor.execute(
+            "INSERT INTO users (name, pass, role) VALUES (%s, %s, 1)",
+            ("guest", _hp("guest123")),
+        )
+
     conn.commit()
     cursor.close()
     conn.close()

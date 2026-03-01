@@ -22,21 +22,25 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/students' else '' }}" href="{{ '/students' if is_admin else '/login' }}"><i class="bi bi-list-ul me-1"></i>学生列表</a>
+            <a class="nav-link text-white {{ 'active' if request.url.path == '/students' else '' }}" href="{{ '/students' if is_logged_in else '/login' }}"><i class="bi bi-list-ul me-1"></i>学生列表</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/teachers' else '' }}" href="{{ '/teachers' if is_admin else '/login' }}"><i class="bi bi-person-badge me-1"></i>教师列表</a>
+            <a class="nav-link text-white {{ 'active' if request.url.path == '/teachers' else '' }}" href="{{ '/teachers' if is_logged_in else '/login' }}"><i class="bi bi-person-badge me-1"></i>教师列表</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/schools' else '' }}" href="{{ '/schools' if is_admin else '/login' }}"><i class="bi bi-building me-1"></i>学校列表</a>
+            <a class="nav-link text-white {{ 'active' if request.url.path == '/schools' else '' }}" href="{{ '/schools' if is_logged_in else '/login' }}"><i class="bi bi-building me-1"></i>学校列表</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/grades' else '' }}" href="{{ '/grades' if is_admin else '/login' }}"><i class="bi bi-journal-check me-1"></i>学生成绩</a>
+            <a class="nav-link text-white {{ 'active' if request.url.path == '/grades' else '' }}" href="{{ '/grades' if is_logged_in else '/login' }}"><i class="bi bi-journal-check me-1"></i>学生成绩</a>
           </li>
         </ul>
         <div class="navbar-nav ms-auto">
+          {% if is_logged_in %}
           {% if is_admin %}
-          <span class="nav-link text-white"><i class="bi bi-person-badge me-1"></i>管理员</span>
+          <span class="nav-link text-white"><i class="bi bi-person-badge me-1"></i>根用户</span>
+          {% else %}
+          <span class="nav-link text-white"><i class="bi bi-person me-1"></i>访客</span>
+          {% endif %}
           <form action="/logout" method="post" class="d-inline">
             <button type="submit" class="btn btn-link nav-link text-white p-0 ms-2">退出</button>
           </form>

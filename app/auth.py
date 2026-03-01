@@ -1,49 +1,42 @@
-"""简单会话与管理员鉴权（session + 角色）。"""
+"""会话与用户鉴权（session + users 表，role 0=根用户 1=访客）。"""
 
 import hashlib
 import os
-from typing import Annotated
+from typing import Annotated, Optional
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import JSONResponse, RedirectResponse
 
-# 管理员账号（演示用，密码为 admin123）
-ADMIN_USERNAME = "admin"
-_ADMIN_PASSWORD_SALT = "student-admin"
-_ADMIN_PASSWORD_HASH = hashlib.sha256(
-    (_ADMIN_PASSWORD_SALT + "admin123").encode()
-).hexdigest()
+_PASSWORD_SALT = "student-admin"
 
 
 def _hash_password(password: str) -> str:
-    return hashlib.sha256((_ADMIN_PASSWORD_SALT + password).encode()).hexdigest()
+    return hashlib.sha256((_PASSWORD_SALT + password).encode()).hexdigest()
 
 
-def verify_admin(username: str, password: str) -> bool:
-    """校验是否为管理员账号。"""
-    return (
-        username == ADMIN_USERNAME and _hash_password(password) == _ADMIN_PASSWORD_HASH
-    )
+def verify_user(username: str, password: str) -> Optional[dict]:
+    """校验用户，返回 {id, name, role} 或 None。"""
+    from app.models.user import user_store
+
+    h = _hash_password(password)
+    return user_store.verify(username, h)
 
 
 def get_current_user(request: Request) -> dict:
-    """从 session 获取当前用户，未登录视为访客。"""
-    role = request.session.get("role", "guest")
+    """从 session 获取当前用户。role: 0=根用户, 1=访客, None=未登录。"""
+    role = request.session.get("role")
     username = request.session.get("username", "")
     return {"username": username, "role": role}
 
 
-def require_admin(
-    request: Request,
+def require_root(
     user: Annotated[dict, Depends(get_current_user)],
 ) -> dict:
-    """依赖：仅管理员可过，否则 403。"""
-    if user.get("role") != "admin":
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=403, detail="需要管理员权限")
+    """依赖：仅 role=0 根用户可过，否则 403。"""
+    if user.get("role") != 0:
+        raise HTTPException(status_code=403, detail="需要根用户权限")
     return user
 
 
@@ -51,14 +44,14 @@ PUBLIC_PATHS = {"/", "/login"}
 
 
 class LoginRequiredMiddleware(BaseHTTPMiddleware):
-    """未登录用户只能访问首页和登录页，其他请求重定向到登录或返回 401。"""
+    """未登录用户只能访问首页和登录页。"""
 
     async def dispatch(self, request, call_next):
         path = request.url.path
         if path in PUBLIC_PATHS:
             return await call_next(request)
-        role = request.session.get("role", "guest")
-        if role != "admin":
+        role = request.session.get("role")
+        if role is None:
             if path.startswith("/api/"):
                 return JSONResponse(
                     status_code=401,

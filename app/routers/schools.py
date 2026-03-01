@@ -4,7 +4,7 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.auth import require_admin
+from app.auth import require_root
 from app.models.school import school_store
 from app.schemas.school import School, SchoolCreate, SchoolUpdate
 
@@ -35,7 +35,7 @@ def get_school(school_id: int) -> dict:
 @router.post("", response_model=School, status_code=201)
 def create_school(
     data: SchoolCreate,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> dict:
     """新增学校（仅管理员）。"""
     return school_store.create(data)
@@ -45,7 +45,7 @@ def create_school(
 def update_school(
     school_id: int,
     data: SchoolUpdate,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> dict:
     """更新学校（仅管理员）。"""
     update_dict = data.model_dump(exclude_unset=True)
@@ -60,7 +60,7 @@ def update_school(
 @router.delete("/{school_id}", status_code=204)
 def delete_school(
     school_id: int,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> None:
     """删除学校（仅管理员）。"""
     if not school_store.delete(school_id):

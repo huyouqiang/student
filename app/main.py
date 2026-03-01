@@ -34,25 +34,31 @@ app.include_router(schools.router)
 app.include_router(grades.router)
 
 
+def _template_context(request, user):
+    """构建模板上下文：is_admin=根用户, is_logged_in=已登录。"""
+    role = user.get("role")
+    return {
+        "request": request,
+        "is_admin": role == 0,
+        "is_logged_in": role is not None,
+    }
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
     """首页。"""
     user = get_current_user(request)
-    is_admin = user.get("role") == "admin"
-    return templates.TemplateResponse(
-        "home.html",
-        {"request": request, "is_admin": is_admin},
-    )
+    ctx = _template_context(request, user)
+    return templates.TemplateResponse("home.html", ctx)
 
 
 @app.get("/students", response_class=HTMLResponse)
 def students_page(request: Request) -> HTMLResponse:
     """学生列表页面。"""
     user = get_current_user(request)
-    is_admin = user.get("role") == "admin"
     return templates.TemplateResponse(
         "students/index.html",
-        {"request": request, "is_admin": is_admin},
+        _template_context(request, user),
     )
 
 
@@ -60,10 +66,9 @@ def students_page(request: Request) -> HTMLResponse:
 def teachers_page(request: Request) -> HTMLResponse:
     """教师列表页面。"""
     user = get_current_user(request)
-    is_admin = user.get("role") == "admin"
     return templates.TemplateResponse(
         "teachers/index.html",
-        {"request": request, "is_admin": is_admin},
+        _template_context(request, user),
     )
 
 
@@ -71,10 +76,9 @@ def teachers_page(request: Request) -> HTMLResponse:
 def schools_page(request: Request) -> HTMLResponse:
     """学校列表页面。"""
     user = get_current_user(request)
-    is_admin = user.get("role") == "admin"
     return templates.TemplateResponse(
         "schools/index.html",
-        {"request": request, "is_admin": is_admin},
+        _template_context(request, user),
     )
 
 
@@ -82,10 +86,9 @@ def schools_page(request: Request) -> HTMLResponse:
 def grades_page(request: Request) -> HTMLResponse:
     """学生成绩页面。"""
     user = get_current_user(request)
-    is_admin = user.get("role") == "admin"
     return templates.TemplateResponse(
         "grades/index.html",
-        {"request": request, "is_admin": is_admin},
+        _template_context(request, user),
     )
 
 

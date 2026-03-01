@@ -4,7 +4,7 @@ from typing import Annotated, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.auth import require_admin
+from app.auth import require_root
 from app.models.student import student_store
 from app.schemas.student import Student, StudentCreate, StudentUpdate
 
@@ -41,7 +41,7 @@ def get_student(student_id: int) -> dict:
 @router.post("", response_model=Student, status_code=201)
 def create_student(
     data: StudentCreate,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> dict:
     """新增学生（仅管理员）。"""
     return student_store.create(data)
@@ -51,7 +51,7 @@ def create_student(
 def update_student(
     student_id: int,
     data: StudentUpdate,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> dict:
     """更新学生（仅管理员）。"""
     update_dict = data.model_dump(exclude_unset=True)
@@ -66,7 +66,7 @@ def update_student(
 @router.delete("/{student_id}", status_code=204)
 def delete_student(
     student_id: int,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> None:
     """删除学生（仅管理员）。"""
     if not student_store.delete(student_id):

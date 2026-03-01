@@ -1,4 +1,4 @@
-"""管理员登录与登出。"""
+"""用户登录与登出（从 users 表校验）。"""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.auth import get_current_user, verify_admin
+from app.auth import get_current_user, verify_user
 
 router = APIRouter(tags=["认证"])
 templates = Jinja2Templates(
@@ -18,11 +18,11 @@ templates = Jinja2Templates(
 def login_page(request: Request) -> HTMLResponse:
     """登录页。"""
     user = get_current_user(request)
-    if user.get("role") == "admin":
+    if user.get("role") is not None:
         return RedirectResponse(url="/", status_code=302)
     return templates.TemplateResponse(
         "auth/login.html",
-        {"request": request, "is_admin": False},
+        {"request": request, "is_admin": False, "is_logged_in": False},
     )
 
 
@@ -39,9 +39,10 @@ def login_submit(
             url="/login?error=empty",
             status_code=302,
         )
-    if verify_admin(username, password):
-        request.session["username"] = username
-        request.session["role"] = "admin"
+    user = verify_user(username, password)
+    if user:
+        request.session["username"] = user["name"]
+        request.session["role"] = user["role"]
         return RedirectResponse(url="/", status_code=302)
     return RedirectResponse(
         url="/login?error=invalid",

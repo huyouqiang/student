@@ -4,7 +4,7 @@ from typing import Annotated, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.auth import require_admin
+from app.auth import require_root
 from app.models.grade import grade_store
 from app.schemas.grade import Grade, GradeCreate, GradeUpdate
 
@@ -38,7 +38,7 @@ def get_grade(grade_id: int) -> dict:
 @router.post("", response_model=Grade, status_code=201)
 def create_grade(
     data: GradeCreate,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> dict:
     """新增成绩（仅管理员）。"""
     return grade_store.create(data)
@@ -48,7 +48,7 @@ def create_grade(
 def update_grade(
     grade_id: int,
     data: GradeUpdate,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> dict:
     """更新成绩（仅管理员）。"""
     update_dict = data.model_dump(exclude_unset=True)
@@ -63,7 +63,7 @@ def update_grade(
 @router.delete("/{grade_id}", status_code=204)
 def delete_grade(
     grade_id: int,
-    _admin: Annotated[dict, Depends(require_admin)],
+    _admin: Annotated[dict, Depends(require_root)],
 ) -> None:
     """删除成绩（仅管理员）。"""
     if not grade_store.delete(grade_id):
