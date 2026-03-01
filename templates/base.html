@@ -3,59 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}首页{% endblock %} | 学校erp</title>
+  <title>{% block title %}首页{% endblock %} | 学校 ERP</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    /* 常规正文 14px，大标题（h1-h6）保持 Bootstrap 默认 */
-    body { font-size: 14px; }
+    :root {
+      --bs-primary: #6366f1;
+      --bs-primary-rgb: 99, 102, 241;
+    }
+    body {
+      font-size: 14px;
+      background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+    .navbar-brand { font-weight: 600; }
+    .nav-link { border-radius: 0.375rem; }
+    .nav-link:hover { background-color: rgba(99, 102, 241, 0.08); color: #6366f1 !important; }
+    .nav-link.active { color: #6366f1 !important; font-weight: 500; }
+    .form-control:focus, .form-select:focus { border-color: #6366f1; box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25); }
+    .btn-primary { --bs-btn-bg: #6366f1; --bs-btn-border-color: #6366f1; --bs-btn-hover-bg: #4f46e5; --bs-btn-hover-border-color: #4f46e5; }
+    .page-link:focus { box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25); }
+    .table-scroll-wrap { overflow-x: auto; overflow-y: auto; }
+    .table-scroll-wrap thead th {
+      position: sticky; top: 0; background: #f8f9fa; z-index: 1;
+      box-shadow: 0 1px 0 #dee2e6;
+    }
   </style>
   {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-      <a class="navbar-brand" href="/"><i class="bi bi-people-fill me-1"></i>学校erp</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="切换导航">
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm py-2">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand text-dark" href="/">
+        <i class="bi bi-mortarboard-fill text-primary me-2"></i>学校 ERP
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="切换导航">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/students' else '' }}" href="{{ '/students' if is_logged_in else '/login' }}"><i class="bi bi-list-ul me-1"></i>学生列表</a>
+            <a class="nav-link text-body px-3 {{ 'active' if request.url.path == '/students' else '' }}" href="{{ '/students' if is_logged_in else '/login' }}"><i class="bi bi-list-ul me-2"></i>学生列表</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/teachers' else '' }}" href="{{ '/teachers' if is_logged_in else '/login' }}"><i class="bi bi-person-badge me-1"></i>教师列表</a>
+            <a class="nav-link text-body px-3 {{ 'active' if request.url.path == '/teachers' else '' }}" href="{{ '/teachers' if is_logged_in else '/login' }}"><i class="bi bi-person-badge me-2"></i>教师列表</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/schools' else '' }}" href="{{ '/schools' if is_logged_in else '/login' }}"><i class="bi bi-building me-1"></i>学校列表</a>
+            <a class="nav-link text-body px-3 {{ 'active' if request.url.path == '/schools' else '' }}" href="{{ '/schools' if is_logged_in else '/login' }}"><i class="bi bi-building me-2"></i>学校列表</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link text-white {{ 'active' if request.url.path == '/grades' else '' }}" href="{{ '/grades' if is_logged_in else '/login' }}"><i class="bi bi-journal-check me-1"></i>学生成绩</a>
+            <a class="nav-link text-body px-3 {{ 'active' if request.url.path == '/grades' else '' }}" href="{{ '/grades' if is_logged_in else '/login' }}"><i class="bi bi-journal-check me-2"></i>学生成绩</a>
           </li>
         </ul>
-        <div class="navbar-nav ms-auto">
+        <div class="navbar-nav ms-auto align-items-center">
           {% if is_logged_in %}
-          {% if is_admin %}
-          <span class="nav-link text-white"><i class="bi bi-person-badge me-1"></i>根用户</span>
-          {% else %}
-          <span class="nav-link text-white"><i class="bi bi-person me-1"></i>访客</span>
-          {% endif %}
+          <span class="nav-link text-body px-3 py-2 d-flex flex-column align-items-end text-end">
+            {% if is_admin %}
+            <span><i class="bi bi-shield-lock me-1"></i>根用户</span>
+            {% else %}
+            <span><i class="bi bi-person me-1"></i>访客</span>
+            {% endif %}
+            <span class="small text-muted">{{ current_user_name or '—' }}</span>
+          </span>
           <form action="/logout" method="post" class="d-inline">
-            <button type="submit" class="btn btn-link nav-link text-white p-0 ms-2">退出</button>
+            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3 ms-1">退出</button>
           </form>
           {% else %}
-          <a class="nav-link text-white {{ 'active' if request.url.path == '/login' else '' }}" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>登录</a>
+          <a class="nav-link text-body px-3 {{ 'active' if request.url.path == '/login' else '' }}" href="/login"><i class="bi bi-box-arrow-in-right me-2"></i>登录</a>
           {% endif %}
-          <a class="nav-link text-white" href="/docs" target="_blank"><i class="bi bi-file-code me-1"></i>API 文档</a>
+          <a class="nav-link text-body px-3" href="/docs" target="_blank"><i class="bi bi-file-code me-2"></i>API 文档</a>
         </div>
       </div>
     </div>
   </nav>
-  <main class="container py-4">
+  <main class="container-fluid px-4 py-4" style="min-height: calc(100vh - 60px - 56px);">
     {% block content %}{% endblock %}
   </main>
+  <footer class="py-3 bg-white border-top text-center text-muted small">
+    备案号：{% block footer_icp %}待备案{% endblock %}
+  </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function() {
+    function setTableMaxHeight() {
+      document.querySelectorAll('.table-scroll-wrap').forEach(function(wrap) {
+        var card = wrap.closest('.card');
+        if (!card) return;
+        var rect = card.getBoundingClientRect();
+        var spaceBelow = window.innerHeight - rect.top - 70;
+        wrap.style.maxHeight = Math.max(200, spaceBelow) + 'px';
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setTableMaxHeight);
+    } else {
+      setTableMaxHeight();
+    }
+    window.addEventListener('resize', setTableMaxHeight);
+    window.setTableMaxHeight = setTableMaxHeight;
+  })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -2,28 +2,32 @@
 {% block title %}学生成绩{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h3 mb-0"><i class="bi bi-journal-check me-2"></i>学生成绩</h1>
-  {% if is_admin %}
-  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-    <i class="bi bi-plus-lg me-1"></i>新增成绩
-  </button>
-  {% endif %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <h5 class="fw-semibold text-dark mb-0"><i class="bi bi-journal-check me-2 text-primary"></i>学生成绩</h5>
+  <div class="d-flex align-items-center gap-3">
+    <input type="text" class="form-control rounded-pill" id="searchInput" placeholder="搜索学生姓名/科目/学期..." value="" style="width: 200px;">
+    <button type="button" class="btn btn-outline-secondary rounded-pill" id="searchBtn" title="搜索"><i class="bi bi-search"></i></button>
+    {% if is_admin %}
+    <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addModal">
+      <i class="bi bi-plus-lg me-1"></i>新增成绩
+    </button>
+    {% endif %}
+  </div>
 </div>
 
-<div class="card shadow-sm">
-  <div class="card-body">
-    <div id="loading" class="text-center py-5 text-muted">
-      <div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div>
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+  <div class="card-body p-0">
+    <div id="loading" class="text-center py-5 px-4 text-muted">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">加载中...</span></div>
       <p class="mt-2 mb-0">加载成绩列表...</p>
     </div>
-    <div id="empty" class="text-center py-5 text-muted d-none">
-      <i class="bi bi-inbox display-4"></i>
+    <div id="empty" class="text-center py-5 px-4 text-muted d-none">
+      <i class="bi bi-inbox display-4 text-secondary"></i>
       <p class="mt-2 mb-0">暂无成绩记录{% if is_admin %}，点击「新增成绩」添加{% endif %}</p>
     </div>
     <div id="table-wrap" class="d-none">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
+      <div class="table-responsive table-scroll-wrap">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>ID</th>
@@ -38,7 +42,7 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <div id="pagination-wrap" class="d-none mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div id="pagination-wrap" class="d-none px-4 py-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
         <span class="text-muted small" id="pagination-info">共 0 条</span>
         <nav>
           <ul class="pagination pagination-sm mb-0" id="pagination-btns"></ul>
@@ -49,102 +53,102 @@
 </div>
 
 <div class="modal fade" id="addModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">新增成绩</h5>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom py-3">
+        <h5 class="modal-title fw-semibold">新增成绩</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body py-4">
         <form id="addForm">
           <input type="hidden" name="student_id" value="">
           <div class="mb-3">
-            <label class="form-label">学生 <span class="text-danger">*</span></label>
+            <label class="form-label fw-medium">学生 <span class="text-danger">*</span></label>
             <div class="input-group">
-              <input type="text" class="form-control" name="student_name" required readonly placeholder="点击选择学生">
-              <button type="button" class="btn btn-outline-secondary" id="addSelectStudent"><i class="bi bi-search me-1"></i>选择学生</button>
+              <input type="text" class="form-control rounded-start" name="student_name" required readonly placeholder="点击选择学生">
+              <button type="button" class="btn btn-outline-secondary rounded-end" id="addSelectStudent"><i class="bi bi-search me-1"></i>选择学生</button>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label">科目 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="subject" required maxlength="50" placeholder="如：语文、数学">
+            <label class="form-label fw-medium">科目 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control rounded-3" name="subject" required maxlength="50" placeholder="如：语文、数学">
           </div>
           <div class="mb-3">
-            <label class="form-label">分数 <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="score" required min="0" max="100" step="0.5" placeholder="0-100">
+            <label class="form-label fw-medium">分数 <span class="text-danger">*</span></label>
+            <input type="number" class="form-control rounded-3" name="score" required min="0" max="100" step="0.5" placeholder="0-100">
           </div>
           <div class="mb-3">
-            <label class="form-label">考试日期</label>
-            <input type="text" class="form-control" name="exam_date" maxlength="20" placeholder="如：2024-06-15">
+            <label class="form-label fw-medium">考试日期</label>
+            <input type="text" class="form-control rounded-3" name="exam_date" maxlength="20" placeholder="如：2024-06-15">
           </div>
           <div class="mb-3">
-            <label class="form-label">学期</label>
-            <input type="text" class="form-control" name="semester" maxlength="50" placeholder="如：2024-2025上学期">
+            <label class="form-label fw-medium">学期</label>
+            <input type="text" class="form-control rounded-3" name="semester" maxlength="50" placeholder="如：2024-2025上学期">
           </div>
         </form>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-primary" id="addSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
+      <div class="modal-footer border-top py-3">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="addSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">编辑成绩</h5>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom py-3">
+        <h5 class="modal-title fw-semibold">编辑成绩</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body py-4">
         <form id="editForm">
           <input type="hidden" name="id">
           <input type="hidden" name="student_id" value="">
           <div class="mb-3">
-            <label class="form-label">学生 <span class="text-danger">*</span></label>
+            <label class="form-label fw-medium">学生 <span class="text-danger">*</span></label>
             <div class="input-group">
-              <input type="text" class="form-control" name="student_name" required readonly placeholder="点击选择学生">
-              <button type="button" class="btn btn-outline-secondary" id="editSelectStudent"><i class="bi bi-search me-1"></i>选择学生</button>
+              <input type="text" class="form-control rounded-start" name="student_name" required readonly placeholder="点击选择学生">
+              <button type="button" class="btn btn-outline-secondary rounded-end" id="editSelectStudent"><i class="bi bi-search me-1"></i>选择学生</button>
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label">科目 <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="subject" required maxlength="50">
+            <label class="form-label fw-medium">科目 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control rounded-3" name="subject" required maxlength="50">
           </div>
           <div class="mb-3">
-            <label class="form-label">分数 <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="score" required min="0" max="100" step="0.5">
+            <label class="form-label fw-medium">分数 <span class="text-danger">*</span></label>
+            <input type="number" class="form-control rounded-3" name="score" required min="0" max="100" step="0.5">
           </div>
           <div class="mb-3">
-            <label class="form-label">考试日期</label>
-            <input type="text" class="form-control" name="exam_date" maxlength="20">
+            <label class="form-label fw-medium">考试日期</label>
+            <input type="text" class="form-control rounded-3" name="exam_date" maxlength="20">
           </div>
           <div class="mb-3">
-            <label class="form-label">学期</label>
-            <input type="text" class="form-control" name="semester" maxlength="50">
+            <label class="form-label fw-medium">学期</label>
+            <input type="text" class="form-control rounded-3" name="semester" maxlength="50">
           </div>
         </form>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-primary" id="editSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
+      <div class="modal-footer border-top py-3">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" id="editSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="modal fade" id="selectStudentModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">选择学生</h5>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom py-3">
+        <h5 class="modal-title fw-semibold">选择学生</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body py-4">
         <div class="mb-3 position-relative">
-          <input type="text" class="form-control" id="selectStudentSearch" placeholder="输入姓名或年级搜索..." autocomplete="off">
+          <input type="text" class="form-control rounded-3" id="selectStudentSearch" placeholder="输入姓名或年级搜索..." autocomplete="off">
           <div id="selectStudentAutocomplete" class="list-group position-absolute w-100 mt-1 d-none" style="max-height: 200px; overflow-y: auto; z-index: 1050; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); border-radius: 0.25rem;"></div>
         </div>
         <div id="selectStudentLoading" class="text-center py-3 text-muted">加载学生列表...</div>
@@ -156,17 +160,17 @@
 
 <div class="modal fade" id="deleteModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">确认删除</h5>
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-bottom py-3">
+        <h5 class="modal-title fw-semibold">确认删除</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body py-4">
         <p class="mb-0">确定要删除该条成绩记录吗？此操作不可恢复。</p>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-danger" id="deleteConfirm"><i class="bi bi-trash me-1"></i>删除</button>
+      <div class="modal-footer border-top py-3">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger rounded-pill px-4" id="deleteConfirm"><i class="bi bi-trash me-1"></i>删除</button>
       </div>
     </div>
   </div>
@@ -225,16 +229,21 @@
       a.addEventListener('click', function (e) {
         e.preventDefault();
         const p = parseInt(this.dataset.page, 10);
-        if (p >= 1 && p <= totalPages) loadList(p);
+        if (p >= 1 && p <= totalPages) loadList(p, currentSearch);
       });
     });
   }
 
-  async function loadList(page) {
+  let currentSearch = '';
+
+  async function loadList(page, searchKeyword) {
     page = page || 1;
+    if (searchKeyword !== undefined) currentSearch = searchKeyword;
     showView('loading');
     try {
-      const res = await fetch(API + '?page=' + page + '&limit=' + PER_PAGE);
+      let url = API + '?page=' + page + '&limit=' + PER_PAGE;
+      if (currentSearch) url += '&search=' + encodeURIComponent(currentSearch);
+      const res = await fetch(url);
       if (!res.ok) throw new Error(res.statusText);
       const data = await res.json();
       const list = data.items;
@@ -249,14 +258,15 @@
           <td>${escapeHtml(g.exam_date || '')}</td>
           <td>${escapeHtml(g.semester || '')}</td>
           ${IS_ADMIN ? `<td class="text-end">
-            <button type="button" class="btn btn-sm btn-outline-primary me-1 edit-btn" data-item='${escapeAttr(JSON.stringify(g))}'><i class="bi bi-pencil"></i> 编辑</button>
-            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-item='${escapeAttr(JSON.stringify({ id: g.id }))}'><i class="bi bi-trash"></i> 删除</button>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill me-1 edit-btn" data-item='${escapeAttr(JSON.stringify(g))}'><i class="bi bi-pencil"></i> 编辑</button>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill delete-btn" data-item='${escapeAttr(JSON.stringify({ id: g.id }))}'><i class="bi bi-trash"></i> 删除</button>
           </td>` : ''}
         </tr>
       `).join('');
       showView('table');
       renderPagination(total, page, PER_PAGE);
       bindRowEvents();
+      if (window.setTableMaxHeight) window.setTableMaxHeight();
     } catch (e) {
       showView('empty');
       tbody.innerHTML = '';
@@ -420,7 +430,7 @@
       if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
       form.reset();
-      loadList(1);
+      loadList(1, currentSearch);
     } catch (e) { alert('新增失败：' + e.message); }
   });
 
@@ -442,7 +452,7 @@
       const res = await fetch(API + '/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-      loadList(1);
+      loadList(1, currentSearch);
     } catch (e) { alert('更新失败：' + e.message); }
   });
 
@@ -452,8 +462,19 @@
       const res = await fetch(API + '/' + id, { method: 'DELETE' });
       if (!res.ok) throw new Error(res.statusText);
       bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-      loadList(1);
+      loadList(1, currentSearch);
     } catch (e) { alert('删除失败：' + e.message); }
+  });
+
+  document.getElementById('searchBtn').addEventListener('click', function () {
+    const kw = document.getElementById('searchInput').value.trim();
+    loadList(1, kw);
+  });
+  document.getElementById('searchInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      const kw = this.value.trim();
+      loadList(1, kw);
+    }
   });
 
   loadList(1);

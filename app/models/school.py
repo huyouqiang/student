@@ -57,6 +57,38 @@ class SchoolStore:
         conn.close()
         return rows
 
+    def search_count(self, keyword: str) -> int:
+        """搜索条件下的总记录数。"""
+        if not keyword or not keyword.strip():
+            return self.get_count()
+        conn = get_connection()
+        cursor = conn.cursor()
+        pattern = f"%{keyword.strip()}%"
+        cursor.execute(
+            "SELECT COUNT(*) FROM schools WHERE name LIKE %s OR address LIKE %s OR school_type LIKE %s",
+            (pattern, pattern, pattern),
+        )
+        total = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return total
+
+    def search_page(self, offset: int, limit: int, keyword: str) -> List[dict]:
+        """分页搜索学校。"""
+        if not keyword or not keyword.strip():
+            return self.get_page(offset, limit)
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        pattern = f"%{keyword.strip()}%"
+        cursor.execute(
+            "SELECT * FROM schools WHERE name LIKE %s OR address LIKE %s OR school_type LIKE %s ORDER BY id LIMIT %s OFFSET %s",
+            (pattern, pattern, pattern, limit, offset),
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+
     def get_by_id(self, school_id: int) -> Optional[dict]:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)

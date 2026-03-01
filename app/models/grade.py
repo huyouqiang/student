@@ -71,6 +71,56 @@ class GradeStore:
         conn.close()
         return total
 
+    def search_count(self, keyword: str, student_id: Optional[int] = None) -> int:
+        """搜索条件下的总记录数。"""
+        if not keyword or not keyword.strip():
+            return self.get_count(student_id)
+        conn = get_connection()
+        cursor = conn.cursor()
+        pattern = f"%{keyword.strip()}%"
+        if student_id is not None:
+            cursor.execute(
+                "SELECT COUNT(*) FROM grades WHERE student_id = %s AND (student_name LIKE %s OR subject LIKE %s OR semester LIKE %s)",
+                (student_id, pattern, pattern, pattern),
+            )
+        else:
+            cursor.execute(
+                "SELECT COUNT(*) FROM grades WHERE student_name LIKE %s OR subject LIKE %s OR semester LIKE %s",
+                (pattern, pattern, pattern),
+            )
+        total = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        return total
+
+    def search_page(
+        self,
+        offset: int,
+        limit: int,
+        keyword: str,
+        student_id: Optional[int] = None,
+    ) -> List[dict]:
+        """分页搜索成绩列表。"""
+        if not keyword or not keyword.strip():
+            return self.get_page(offset, limit, student_id)
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        pattern = f"%{keyword.strip()}%"
+        if student_id is not None:
+            cursor.execute(
+                "SELECT * FROM grades WHERE student_id = %s AND (student_name LIKE %s OR subject LIKE %s OR semester LIKE %s) ORDER BY id LIMIT %s OFFSET %s",
+                (student_id, pattern, pattern, pattern, limit, offset),
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM grades WHERE student_name LIKE %s OR subject LIKE %s OR semester LIKE %s ORDER BY id LIMIT %s OFFSET %s",
+                (pattern, pattern, pattern, limit, offset),
+            )
+        rows = [_normalize_grade_row(r) for r in cursor.fetchall()]
+        cursor.close()
+        conn.close()
+        return rows
+
     def get_page(
         self,
         offset: int,

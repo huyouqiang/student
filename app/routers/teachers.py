@@ -1,6 +1,6 @@
 """教师列表增删改查 API。"""
 
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -15,11 +15,18 @@ router = APIRouter(prefix="/api/teachers", tags=["教师"])
 def list_teachers(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=50),
+    search: Optional[str] = Query(None, description="按姓名/科目/职称/电话搜索"),
 ) -> dict:
     """获取教师列表（访客可查看，分页）。"""
-    total = teacher_store.get_count()
-    offset = (page - 1) * limit
-    items = teacher_store.get_page(offset, limit)
+    keyword = search.strip() if search and search.strip() else None
+    if keyword:
+        total = teacher_store.search_count(keyword)
+        offset = (page - 1) * limit
+        items = teacher_store.search_page(offset, limit, keyword)
+    else:
+        total = teacher_store.get_count()
+        offset = (page - 1) * limit
+        items = teacher_store.get_page(offset, limit)
     return {"items": items, "total": total, "page": page, "per_page": limit}
 
 

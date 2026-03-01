@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}管理员登录{% endblock %}
+{% block title %}登录{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center py-5">
   <div class="col-md-5 col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h5 class="card-title mb-4"><i class="bi bi-box-arrow-in-right me-2"></i>管理员登录</h5>
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-5">
+        <h5 class="fw-semibold text-dark mb-4"><i class="bi bi-box-arrow-in-right me-2 text-primary"></i>登录</h5>
         {% if request.query_params.get('error') == 'invalid' %}
-        <div class="alert alert-danger py-2" role="alert">用户名或密码错误</div>
+        <div class="alert alert-danger py-2 rounded-3" role="alert">用户名或密码错误</div>
         {% elif request.query_params.get('error') == 'empty' %}
-        <div class="alert alert-warning py-2" role="alert">请输入用户名</div>
+        <div class="alert alert-warning py-2 rounded-3" role="alert">请输入用户名</div>
         {% endif %}
         <form method="post" action="/login">
           <div class="mb-3">
-            <label class="form-label">用户名</label>
-            <input type="text" class="form-control" name="username" required autofocus placeholder="admin">
+            <label class="form-label fw-medium">用户名</label>
+            <input type="text" class="form-control form-control-lg rounded-3" name="username" required autofocus placeholder="请输入用户名">
           </div>
-          <div class="mb-3">
-            <label class="form-label">密码</label>
-            <input type="password" class="form-control" name="password" required placeholder="密码">
+          <div class="mb-4">
+            <label class="form-label fw-medium">密码</label>
+            <input type="password" class="form-control form-control-lg rounded-3" name="password" required placeholder="请输入密码">
           </div>
-          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right me-1"></i>登录</button>
+          <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-medium"><i class="bi bi-box-arrow-in-right me-1"></i>登录</button>
         </form>
-        <p class="text-muted small mt-3 mb-0">默认根用户：admin / admin123；访客：guest / guest123</p>
+        <p class="text-muted small mt-4 mb-0">默认根用户：admin / admin123；访客：guest / guest123</p>
       </div>
     </div>
   </div>

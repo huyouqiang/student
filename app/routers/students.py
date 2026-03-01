@@ -19,13 +19,17 @@ def list_students(
     search: Optional[str] = Query(None, description="按姓名或年级搜索"),
 ) -> Union[dict, list]:
     """获取学生列表（访客可查看，分页）。"""
-    if search is not None and search.strip():
-        return student_store.search(search.strip(), limit=20)
     if all_items:
         return student_store.get_all()
-    total = student_store.get_count()
-    offset = (page - 1) * limit
-    items = student_store.get_page(offset, limit)
+    keyword = search.strip() if search and search.strip() else None
+    if keyword:
+        total = student_store.search_count(keyword)
+        offset = (page - 1) * limit
+        items = student_store.search_page(offset, limit, keyword)
+    else:
+        total = student_store.get_count()
+        offset = (page - 1) * limit
+        items = student_store.get_page(offset, limit)
     return {"items": items, "total": total, "page": page, "per_page": limit}
 
 

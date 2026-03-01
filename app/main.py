@@ -35,12 +35,13 @@ app.include_router(grades.router)
 
 
 def _template_context(request, user):
-    """构建模板上下文：is_admin=根用户, is_logged_in=已登录。"""
+    """构建模板上下文：is_admin=根用户, is_logged_in=已登录, current_user_name=用户名。"""
     role = user.get("role")
     return {
         "request": request,
         "is_admin": role == 0,
         "is_logged_in": role is not None,
+        "current_user_name": user.get("username", ""),
     }
 
 
