@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}教师列表{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0"><i class="bi bi-person-badge me-2"></i>教师列表</h1>
+  {% if is_admin %}
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="bi bi-plus-lg me-1"></i>新增教师
+  </button>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div id="loading" class="text-center py-5 text-muted">
+      <div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div>
+      <p class="mt-2 mb-0">加载教师列表...</p>
+    </div>
+    <div id="empty" class="text-center py-5 text-muted d-none">
+      <i class="bi bi-inbox display-4"></i>
+      <p class="mt-2 mb-0">暂无教师{% if is_admin %}，点击「新增教师」添加{% endif %}</p>
+    </div>
+    <div id="table-wrap" class="d-none">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>姓名</th>
+              <th>任教科目</th>
+              <th>职称</th>
+              <th>联系电话</th>
+              {% if is_admin %}<th class="text-end">操作</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">新增教师</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <div class="mb-3">
+            <label class="form-label">姓名 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" required maxlength="100" placeholder="请输入姓名">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">任教科目</label>
+            <input type="text" class="form-control" name="subject" maxlength="50" placeholder="如：数学">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">职称</label>
+            <input type="text" class="form-control" name="title" maxlength="50" placeholder="如：高级教师">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">联系电话</label>
+            <input type="text" class="form-control" name="phone" maxlength="20" placeholder="手机或座机">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="addSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">编辑教师</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" name="id">
+          <div class="mb-3">
+            <label class="form-label">姓名 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="name" required maxlength="100">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">任教科目</label>
+            <input type="text" class="form-control" name="subject" maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">职称</label>
+            <input type="text" class="form-control" name="title" maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">联系电话</label>
+            <input type="text" class="form-control" name="phone" maxlength="20">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="editSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">确认删除</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">确定要删除教师「<strong id="deleteName"></strong>」吗？此操作不可恢复。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="deleteConfirm"><i class="bi bi-trash me-1"></i>删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+  const tbody = document.getElementById('tbody');
+  const loading = document.getElementById('loading');
+  const empty = document.getElementById('empty');
+  const tableWrap = document.getElementById('table-wrap');
+  const API = '/api/teachers';
+
+  function showView(which) {
+    loading.classList.add('d-none');
+    empty.classList.add('d-none');
+    tableWrap.classList.add('d-none');
+    if (which === 'loading') loading.classList.remove('d-none');
+    else if (which === 'empty') empty.classList.remove('d-none');
+    else tableWrap.classList.remove('d-none');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function escapeAttr(str) {
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, '&#39;');
+  }
+
+  async function loadList() {
+    showView('loading');
+    try {
+      const res = await fetch(API);
+      if (!res.ok) throw new Error(res.statusText);
+      const list = await res.json();
+      if (list.length === 0) { showView('empty'); return; }
+      tbody.innerHTML = list.map(t => `
+        <tr>
+          <td>${t.id}</td>
+          <td>${escapeHtml(t.name)}</td>
+          <td>${escapeHtml(t.subject || '')}</td>
+          <td>${escapeHtml(t.title || '')}</td>
+          <td>${escapeHtml(t.phone || '')}</td>
+          ${IS_ADMIN ? `<td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-primary me-1 edit-btn" data-item='${escapeAttr(JSON.stringify(t))}'><i class="bi bi-pencil"></i> 编辑</button>
+            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-item='${escapeAttr(JSON.stringify({ id: t.id, name: t.name }))}'><i class="bi bi-trash"></i> 删除</button>
+          </td>` : ''}
+        </tr>
+      `).join('');
+      showView('table');
+      bindRowEvents();
+    } catch (e) {
+      showView('empty');
+      tbody.innerHTML = '';
+      alert('加载列表失败：' + e.message);
+    }
+  }
+
+  function bindRowEvents() {
+    tbody.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const t = JSON.parse(this.getAttribute('data-item'));
+        const form = document.getElementById('editForm');
+        form.querySelector('[name=id]').value = t.id;
+        form.querySelector('[name=name]').value = t.name;
+        form.querySelector('[name=subject]').value = t.subject || '';
+        form.querySelector('[name=title]').value = t.title || '';
+        form.querySelector('[name=phone]').value = t.phone || '';
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+      });
+    });
+    tbody.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const { id, name } = JSON.parse(this.getAttribute('data-item'));
+        document.getElementById('deleteName').textContent = name;
+        document.getElementById('deleteModal').dataset.deleteId = id;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+      });
+    });
+  }
+
+  document.getElementById('addSubmit').addEventListener('click', async function () {
+    const form = document.getElementById('addForm');
+    const payload = { name: form.name.value.trim(), subject: form.subject.value.trim() || '', title: form.title.value.trim() || '', phone: form.phone.value.trim() || '' };
+    if (!payload.name) { alert('请输入姓名'); return; }
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+      bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+      form.reset();
+      loadList();
+    } catch (e) { alert('新增失败：' + e.message); }
+  });
+
+  document.getElementById('editSubmit').addEventListener('click', async function () {
+    const form = document.getElementById('editForm');
+    const id = form.querySelector('[name=id]').value;
+    const payload = { name: form.name.value.trim(), subject: form.subject.value.trim() || '', title: form.title.value.trim() || '', phone: form.phone.value.trim() || '' };
+    if (!payload.name) { alert('请输入姓名'); return; }
+    try {
+      const res = await fetch(API + '/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+      bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+      loadList();
+    } catch (e) { alert('更新失败：' + e.message); }
+  });
+
+  document.getElementById('deleteConfirm').addEventListener('click', async function () {
+    const id = document.getElementById('deleteModal').dataset.deleteId;
+    try {
+      const res = await fetch(API + '/' + id, { method: 'DELETE' });
+      if (!res.ok) throw new Error(res.statusText);
+      bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+      loadList();
+    } catch (e) { alert('删除失败：' + e.message); }
+  });
+
+  loadList();
+})();
+</script>
+{% endblock %}

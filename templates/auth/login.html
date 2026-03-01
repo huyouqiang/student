@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}管理员登录{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-4"><i class="bi bi-box-arrow-in-right me-2"></i>管理员登录</h5>
+        {% if request.query_params.get('error') == 'invalid' %}
+        <div class="alert alert-danger py-2" role="alert">用户名或密码错误</div>
+        {% elif request.query_params.get('error') == 'empty' %}
+        <div class="alert alert-warning py-2" role="alert">请输入用户名</div>
+        {% endif %}
+        <form method="post" action="/login">
+          <div class="mb-3">
+            <label class="form-label">用户名</label>
+            <input type="text" class="form-control" name="username" required autofocus placeholder="admin">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">密码</label>
+            <input type="password" class="form-control" name="password" required placeholder="密码">
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right me-1"></i>登录</button>
+        </form>
+        <p class="text-muted small mt-3 mb-0">默认管理员：admin / admin123</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}学生成绩{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0"><i class="bi bi-journal-check me-2"></i>学生成绩</h1>
+  {% if is_admin %}
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+    <i class="bi bi-plus-lg me-1"></i>新增成绩
+  </button>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div id="loading" class="text-center py-5 text-muted">
+      <div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div>
+      <p class="mt-2 mb-0">加载成绩列表...</p>
+    </div>
+    <div id="empty" class="text-center py-5 text-muted d-none">
+      <i class="bi bi-inbox display-4"></i>
+      <p class="mt-2 mb-0">暂无成绩记录{% if is_admin %}，点击「新增成绩」添加{% endif %}</p>
+    </div>
+    <div id="table-wrap" class="d-none">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>学生姓名</th>
+              <th>科目</th>
+              <th>分数</th>
+              <th>考试日期</th>
+              <th>学期</th>
+              {% if is_admin %}<th class="text-end">操作</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">新增成绩</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm">
+          <input type="hidden" name="student_id" value="">
+          <div class="mb-3">
+            <label class="form-label">学生 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="text" class="form-control" name="student_name" required readonly placeholder="点击选择学生">
+              <button type="button" class="btn btn-outline-secondary" id="addSelectStudent"><i class="bi bi-search me-1"></i>选择学生</button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">科目 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="subject" required maxlength="50" placeholder="如：语文、数学">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">分数 <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="score" required min="0" max="100" step="0.5" placeholder="0-100">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">考试日期</label>
+            <input type="text" class="form-control" name="exam_date" maxlength="20" placeholder="如：2024-06-15">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">学期</label>
+            <input type="text" class="form-control" name="semester" maxlength="50" placeholder="如：2024-2025上学期">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="addSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">编辑成绩</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm">
+          <input type="hidden" name="id">
+          <input type="hidden" name="student_id" value="">
+          <div class="mb-3">
+            <label class="form-label">学生 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="text" class="form-control" name="student_name" required readonly placeholder="点击选择学生">
+              <button type="button" class="btn btn-outline-secondary" id="editSelectStudent"><i class="bi bi-search me-1"></i>选择学生</button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">科目 <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="subject" required maxlength="50">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">分数 <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" name="score" required min="0" max="100" step="0.5">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">考试日期</label>
+            <input type="text" class="form-control" name="exam_date" maxlength="20">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">学期</label>
+            <input type="text" class="form-control" name="semester" maxlength="50">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="editSubmit"><i class="bi bi-check-lg me-1"></i>保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="selectStudentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">选择学生</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="selectStudentLoading" class="text-center py-3 text-muted">加载学生列表...</div>
+        <div id="selectStudentList" class="list-group d-none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">确认删除</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">确定要删除该条成绩记录吗？此操作不可恢复。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-danger" id="deleteConfirm"><i class="bi bi-trash me-1"></i>删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+  const tbody = document.getElementById('tbody');
+  const loading = document.getElementById('loading');
+  const empty = document.getElementById('empty');
+  const tableWrap = document.getElementById('table-wrap');
+  const API = '/api/grades';
+
+  function showView(which) {
+    loading.classList.add('d-none');
+    empty.classList.add('d-none');
+    tableWrap.classList.add('d-none');
+    if (which === 'loading') loading.classList.remove('d-none');
+    else if (which === 'empty') empty.classList.remove('d-none');
+    else tableWrap.classList.remove('d-none');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function escapeAttr(str) {
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, '&#39;');
+  }
+
+  async function loadList() {
+    showView('loading');
+    try {
+      const res = await fetch(API);
+      if (!res.ok) throw new Error(res.statusText);
+      const list = await res.json();
+      if (list.length === 0) { showView('empty'); return; }
+      tbody.innerHTML = list.map(g => `
+        <tr>
+          <td>${g.id}</td>
+          <td>${escapeHtml(g.student_name)}</td>
+          <td>${escapeHtml(g.subject)}</td>
+          <td>${g.score}</td>
+          <td>${escapeHtml(g.exam_date || '')}</td>
+          <td>${escapeHtml(g.semester || '')}</td>
+          ${IS_ADMIN ? `<td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-primary me-1 edit-btn" data-item='${escapeAttr(JSON.stringify(g))}'><i class="bi bi-pencil"></i> 编辑</button>
+            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-item='${escapeAttr(JSON.stringify({ id: g.id }))}'><i class="bi bi-trash"></i> 删除</button>
+          </td>` : ''}
+        </tr>
+      `).join('');
+      showView('table');
+      bindRowEvents();
+    } catch (e) {
+      showView('empty');
+      tbody.innerHTML = '';
+      alert('加载列表失败：' + e.message);
+    }
+  }
+
+  function bindRowEvents() {
+    tbody.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const g = JSON.parse(this.getAttribute('data-item'));
+        const form = document.getElementById('editForm');
+        form.querySelector('[name=id]').value = g.id;
+        form.querySelector('[name=student_id]').value = g.student_id || '';
+        form.querySelector('[name=student_name]').value = g.student_name;
+        form.querySelector('[name=subject]').value = g.subject;
+        form.querySelector('[name=score]').value = g.score;
+        form.querySelector('[name=exam_date]').value = g.exam_date || '';
+        form.querySelector('[name=semester]').value = g.semester || '';
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+      });
+    });
+    tbody.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const { id } = JSON.parse(this.getAttribute('data-item'));
+        document.getElementById('deleteModal').dataset.deleteId = id;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+      });
+    });
+  }
+
+  let selectStudentTargetForm = null;
+
+  function openSelectStudentModal(targetFormId) {
+    selectStudentTargetForm = targetFormId;
+    document.getElementById('selectStudentLoading').classList.remove('d-none');
+    document.getElementById('selectStudentList').classList.add('d-none');
+    document.getElementById('selectStudentList').innerHTML = '';
+    new bootstrap.Modal(document.getElementById('selectStudentModal')).show();
+    fetch('/api/students')
+      .then(res => res.json())
+      .then(students => {
+        document.getElementById('selectStudentLoading').classList.add('d-none');
+        if (students.length === 0) {
+          document.getElementById('selectStudentList').innerHTML = '<div class="text-muted text-center py-3">暂无学生，请先在学生列表中添加</div>';
+          document.getElementById('selectStudentList').classList.remove('d-none');
+        } else {
+          document.getElementById('selectStudentList').innerHTML = students.map(s => `
+            <button type="button" class="list-group-item list-group-item-action select-student-btn" data-item='${escapeAttr(JSON.stringify({ id: s.id, name: s.name }))}'>
+              ${escapeHtml(s.name)}（ID: ${s.id}，${escapeHtml(s.grade || '未分班')}）
+            </button>
+          `).join('');
+          document.getElementById('selectStudentList').classList.remove('d-none');
+          document.getElementById('selectStudentModal').querySelectorAll('.select-student-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+              const s = JSON.parse(this.getAttribute('data-item'));
+              const form = document.getElementById(selectStudentTargetForm);
+              form.querySelector('[name=student_id]').value = s.id;
+              form.querySelector('[name=student_name]').value = s.name;
+              bootstrap.Modal.getInstance(document.getElementById('selectStudentModal')).hide();
+            });
+          });
+        }
+      })
+      .catch(() => {
+        document.getElementById('selectStudentLoading').classList.add('d-none');
+        document.getElementById('selectStudentList').innerHTML = '<div class="text-danger text-center py-3">加载失败</div>';
+      });
+  }
+
+  document.getElementById('addSelectStudent').addEventListener('click', function () {
+    openSelectStudentModal('addForm');
+  });
+  document.getElementById('editSelectStudent').addEventListener('click', function () {
+    openSelectStudentModal('editForm');
+  });
+
+  document.getElementById('addSubmit').addEventListener('click', async function () {
+    const form = document.getElementById('addForm');
+    const sid = form.querySelector('[name=student_id]').value;
+    const payload = {
+      student_id: sid ? parseInt(sid, 10) : null,
+      student_name: form.student_name.value.trim(),
+      subject: form.subject.value.trim(),
+      score: parseFloat(form.score.value) || 0,
+      exam_date: form.exam_date.value.trim() || '',
+      semester: form.semester.value.trim() || ''
+    };
+    if (!payload.student_name) { alert('请输入学生姓名'); return; }
+    if (!payload.subject) { alert('请输入科目'); return; }
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+      bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+      form.reset();
+      loadList();
+    } catch (e) { alert('新增失败：' + e.message); }
+  });
+
+  document.getElementById('editSubmit').addEventListener('click', async function () {
+    const form = document.getElementById('editForm');
+    const id = form.querySelector('[name=id]').value;
+    const sid = form.querySelector('[name=student_id]').value;
+    const payload = {
+      student_id: sid ? parseInt(sid, 10) : null,
+      student_name: form.student_name.value.trim(),
+      subject: form.subject.value.trim(),
+      score: parseFloat(form.score.value) || 0,
+      exam_date: form.exam_date.value.trim() || '',
+      semester: form.semester.value.trim() || ''
+    };
+    if (!payload.student_name) { alert('请输入学生姓名'); return; }
+    if (!payload.subject) { alert('请输入科目'); return; }
+    try {
+      const res = await fetch(API + '/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+      bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+      loadList();
+    } catch (e) { alert('更新失败：' + e.message); }
+  });
+
+  document.getElementById('deleteConfirm').addEventListener('click', async function () {
+    const id = document.getElementById('deleteModal').dataset.deleteId;
+    try {
+      const res = await fetch(API + '/' + id, { method: 'DELETE' });
+      if (!res.ok) throw new Error(res.statusText);
+      bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+      loadList();
+    } catch (e) { alert('删除失败：' + e.message); }
+  });
+
+  loadList();
+})();
+</script>
+{% endblock %}
