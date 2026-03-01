@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.45, for macos14.8 (arm64)
 --
--- Host: 127.0.0.1    Database: student
+-- Host: localhost    Database: student
 -- ------------------------------------------------------
 -- Server version	8.0.45
 
@@ -40,7 +40,7 @@ CREATE TABLE `grades` (
 
 LOCK TABLES `grades` WRITE;
 /*!40000 ALTER TABLE `grades` DISABLE KEYS */;
-INSERT INTO `grades` VALUES (1,1,'huyouqiang','数学',80.00,'2024-12-05','2024-05-20'),(2,2,'阿斯蒂芬撒旦法','数学',99.00,'2024-12-05','2024-05-20'),(3,6,'阿达发达','数学',100.00,'2024-12-05','2024-05-20'),(4,20,'hu-.20','数学',100.00,'2024-12-05','2024-05-20'),(5,5,'二哥','数学',100.00,'2024-12-05','2024-05-20');
+INSERT INTO `grades` VALUES (1,3,'萨法','数学',80.00,'2024-12-05','2024-05-20'),(2,2,'阿斯蒂芬撒旦法','数学',99.00,'2024-12-05','2024-05-20'),(3,6,'阿达发达','数学',100.00,'2024-12-05','2024-05-20'),(4,20,'hu-.20','数学',100.00,'2024-12-05','2024-05-20'),(5,5,'二哥','数学',100.00,'2024-12-05','2024-05-20');
 /*!40000 ALTER TABLE `grades` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -160,4 +160,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-01 18:08:42
+-- Dump completed on 2026-03-01 18:59:22
